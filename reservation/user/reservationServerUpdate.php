@@ -51,6 +51,8 @@ try {
         throw new Exception("שגיאה בהכנסת הזמנה: " . $stmt->error);
     }
     $reservation_id = $conn->insert_id;
+    //-------------------------------------------------הכנסה לsession את הID האוטומטי
+    $_SESSION['reservation_id'] = $reservation_id;
     $stmt->close();
 
     // עדכון זמינות - כל יום בנפרד
