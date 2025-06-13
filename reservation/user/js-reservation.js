@@ -1,3 +1,27 @@
+class Reservation {
+    constructor(startDate, endDate) {
+        this.startDate = new Date(startDate.split('/').reverse().join('-'));
+        this.endDate = new Date(endDate.split('/').reverse().join('-'));
+    }
+
+    getDateRange() {
+        let dates = [];
+        let currentDate = new Date(this.startDate);
+        while (currentDate <= this.endDate) {
+            dates.push(this.formatDate(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+    }
+
+    formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+}
+
 $(document).ready(function() {
     const dateFormat = 'dd/mm/yy';
     let unavailableDates = [];
@@ -31,7 +55,6 @@ $(document).ready(function() {
         }
     });
 
-    /*
     // מניעת הקלדה ידנית בשדות התאריך
     $('#start-date, #end-date').on('keydown paste', function(e) {
         // מאפשר רק מקשי חזרה, delete, tab ומקשי חצים
@@ -40,19 +63,20 @@ $(document).ready(function() {
             e.preventDefault();
         }
     });
-*/
+
     // בדיקה נוספת כאשר השדה מאבד פוקוס
     $('#start-date, #end-date').on('blur', function() {
         validateAndUpdateDates();
     });
 
-    // שליחת הימים שבחר המשתמש
+    // שליחה של הימים והמשך הזמנה - נתפס על ידי הקוד החדש בדף reservation.php
     $('#submit').on('click', function(e) {
         e.preventDefault();
         const startDate = $('#start-date').val();
         const endDate = $('#end-date').val();
         const totalPrice = parseFloat($('#total-price').text().replace(/[^0-9.-]+/g, ''));
         
+        // Show a loading message
         $('#message').text('מעבד את ההזמנה...').removeClass('error-message').addClass('processing-message');
         
         if (startDate && endDate) {
@@ -63,9 +87,8 @@ $(document).ready(function() {
                 totalPrice: totalPrice
             });
             
-            // בדיקה עבור תאריכים קורא לפונקציה והקובץ בדיקות
+            // First check for conflicts
             checkReservationConflict(startDate, endDate, totalPrice);
-
         } else {
             $('#message').text('אנא מלא את כל השדות.');
             $('#message').addClass('error-message');
@@ -89,7 +112,7 @@ $(document).ready(function() {
             dailyPrice = 0;
         });
     }
-    //מעלה את בדיקת התאריכים הזמינים
+
     function loadUnavailableDates() {
         console.log('Loading unavailable dates...');
         $.getJSON('get_unavailable_dates.php', function(data) {
@@ -125,7 +148,7 @@ $(document).ready(function() {
             unavailableDates = [];
         });
     }
-    //בדיקת התאריכים אם יש תפיסות הזמנה קודמת באותם תאריכים
+
     function checkReservationConflict(startDate, endDate, totalPrice) {
         $.ajax({
             type: "POST",
@@ -177,7 +200,7 @@ $(document).ready(function() {
                 if (result.success) {
                     $('#message').text('הנתונים נשמרו בהצלחה').removeClass('error-message').addClass('success-message');
                     
-                    // המשך לדף services.php 
+                    // המשך לדף services.php אחרי שנייה
                     setTimeout(function() {
                         window.location.href = "../../services/user/services.php";
                     }, 1000);
@@ -192,7 +215,7 @@ $(document).ready(function() {
             }
         });
     }
-    //ולידצית בחירת תאריכים לפי פורמט
+
     function validateAndUpdateDates() {
         const startDate = $('#start-date').val();
         const endDate = $('#end-date').val();
@@ -259,14 +282,13 @@ $(document).ready(function() {
         }
     }
 
-    //פונקציה אם התאריכים בטווח הנכון לפי התחלה וסיום
     function isValidDateRange(startDate, endDate) {
         const start = new Date(startDate.split('/').reverse().join('-'));
         const end = new Date(endDate.split('/').reverse().join('-'));
         return start <= end;
     }
 
-    // פונקציה שמעדכנת את כמות הימים והמחיר הכולל
+    // פונקציה משופרת שמעדכנת את כמות הימים והמחיר הכולל
     function updateBookingSummary(start, end) {
         // איפוס הודעות שגיאה
         $('#message').text('').removeClass('error-message');
@@ -280,7 +302,7 @@ $(document).ready(function() {
             return;
         }
     
-        // המרה לתאריכים בסדר הנכון יום-חודש-שנה
+        // המרה לתאריכים
         const startParts = start.split("/");
         const endParts = end.split("/");
         const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
