@@ -133,51 +133,6 @@ input[type="text"]:focus {
     transform: translateY(0); /* החזרת הכפתור למקומו כאשר לוחצים עליו */
 }
 
-/*================================================================================*/
-/*עבור הלוח שנה המתווסף*/
-#calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 עמודות עבור 7 ימים בשבוע */
-    gap: 10px; /* מרחק בין הימים */
-}
-
-.header-row {
-    display: contents; /* מאפשר גמישות בתצוגה */
-}
-
-.day-header {
-    text-align: center;
-    font-weight: bold;
-    background-color: #f1f1f1; /* צבע רקע לשמות הימים */
-    padding: 10px; /* רווח פנימי */
-}
-
-.day {
-    text-align: center;
-    padding: 20px; /* רווח פנימי */
-    border: 1px solid #ccc; /* גבולות ליום */
-    background-color: #ffffff; /* צבע רקע ליום */
-    transition: background-color 0.2s; /* מעבר צבע חלק */
-}
-
-.day.reserved {
-    background-color: #f8d7da; /* רקע לתאריכים שמורים */
-}
-
-.empty-day {
-    width: 100%; /* למנוע גובה ספציפי */
-    height: 50px; /* גובה עבור תאים ריקים */
-}
-
-#end-date{
-    margin-bottom: 20px;
-}
-
-#selectedDatesList {
-    margin-top: 15px; /* רווח מעל רשימת התאריכים */
-    color: #333; /* צבע טקסט כהה */
-}
-/*================================================================================*/
 /*עבור סך כל ההזמנה*/
 
 #booking-summary {

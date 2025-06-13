@@ -28,6 +28,7 @@
         </nav>        
     </header>
     <h1>הזמנת מקום בפנסיון</h1>
+    <label>מחיר ליום: <input type=text id="dailyRate" value="50" disabled></label>
     <form action="reservation.php" method="POST">
     <div class="reservation-form">
         <div id="dateSelection">
@@ -41,18 +42,21 @@
                 <input type="text" id="end-date" name="end_date" placeholder=" הקלד תאריך סיום"required>
             </div>
         </div>
-        <button id="submit" class="submit-button">שמור הזמנה</button>
-    </form>
-        <div id="message"></div>
-
         <div id="booking-summary">
-            <h2>סה"כ ימים להזמנה</h2>
+            <h3>סה"כ ימים להזמנה</h3>
             <p id="total-days">0 ימים</p>
         </div>
 
-        <h2 id="selectedDatesHeader" style="display: none;">התאריכים שנבחרו:</h2>
-        <div id="selectedDatesList"></div>
-        <div id="calendar"></div>
+        <div id="booking-summary">
+            <h3>סה"כ לתשלום</h3>
+            <h3>סה"כ: <span id="totalAmount">0</span> ש"ח</h3>
+            <div class="price-info">מחיר ליום: <span>50</span> ש"ח</div>
+        </div>
+        
+        <button id="submit" class="submit-button">שמור הזמנה והמשך</button>
+    </form>
+
+        <div id="message"></div>
     </div>
     
     <footer style="background-color: #f8f9fa; padding: 20px; text-align: center;">
