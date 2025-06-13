@@ -1,0 +1,87 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8;
+    direction: rtl;
+    margin: 0;
+    padding: 0;
+    user-select: none; /* מונע סימון טקסט */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    font-family: 'Arial', sans-serif; /* שינוי פונטים */
+}
+
+.services {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.service {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    transition: transform 0.25s ease; 
+}
+
+.service label {
+    display: block;
+    margin-top: 10px;
+}
+
+.service img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.service:hover {
+    transform: scale(1.05);
+    background-color:#dadbf8;
+    border-color: #b0b0b0;
+    cursor: pointer;
+}
+
+.price {
+    font-weight: bold;
+    font-size: 1.2rem; /* גודל גופן גדול יותר */
+    color: #ff5722;
+}
+
+.summary {
+    background-color: #f8f8f8; 
+    border-radius: 8px; 
+    padding: 20px; 
+    text-align: center; 
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* צל לאיזון */
+}
+
+.summary .highlight {
+    font-size: 24px;
+    font-weight: bold; 
+    color: #4f58d9; /* צבע טקסט שונה */
+}
+
+#checkout-button {
+    background-color: #5cb85c; 
+    color: white; 
+    border: none; /* הפסקת גבולות */
+    border-radius: 5px; 
+    padding: 10px 20px; 
+    font-size: 16px;
+    cursor: pointer; /* מצביע בעת חישה על הכפתור */
+    margin-top: 15px;
+    transition: background-color 0.3s; /* מעבר חלק לצבע */
+}
+
+#checkout-button:hover {
+    background-color: #117c11; /* צבע רקע כאשר מחזיקים בעכבר */
+}
