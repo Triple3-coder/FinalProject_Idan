@@ -1,5 +1,3 @@
-
-
 *{
     margin: 0 auto;
     padding: 0 auto;
@@ -150,8 +148,18 @@ input[type="text"]:focus {
     align-items: center;
 }
 
-footer{
-    background-color: #f8f9fa; padding: 20px; text-align: center;
+#total-days {
+    margin-top: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #432fb8;
+}
+
+#totalAmount {
+    margin-top: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #432fb8;
 }
 
 .unavailable-date a {
@@ -169,4 +177,42 @@ footer{
     width: 2em;
     height: 2em;
     line-height: 2em;
+}
+
+/*עבור מידע על מחיר פנסיון*/
+.price-info {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 0 auto 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 90%; 
+}
+
+.price-info h3 {
+    color: #343a40;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.price-info p {
+    margin: 10px 0;
+    color: #495057;
+    font-size: 1em;
+}
+
+.price-info span {
+    font-weight: bold;
+    color: #432fb8;
+}
+
+.price-info .additional-info {
+    font-style: italic;
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 15px;
 }

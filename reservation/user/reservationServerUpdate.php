@@ -1,19 +1,19 @@
 <?php
+session_start(); //   כדי לגשת ל-SESSION
 header('Content-Type: application/json');
-
 
 $servername = "localhost";
 $username = "itayrm_ItayRam";
 $password = "itay0547862155";
 $dbname = "itayrm_dogs_boarding_house";
 
-
+// בדיקת נתוני תאריכים
 if (!isset($_POST['start_date']) || !isset($_POST['end_date'])) {
     echo json_encode(['error' => 'חסר תאריך התחלה או סיום']);
     exit;
 }
 
-
+// המרת פורמט תאריכים
 $start_date = DateTime::createFromFormat('d/m/Y', $_POST['start_date']);
 $end_date = DateTime::createFromFormat('d/m/Y', $_POST['end_date']);
 
@@ -24,6 +24,15 @@ if (!$start_date || !$end_date) {
 
 $start_date_str = $start_date->format('Y-m-d');
 $end_date_str = $end_date->format('Y-m-d');
+
+// קבלת קוד המשתמש מה-SESSION
+$user_code = '';
+
+// נסה לקבל מ-session אם קיים
+if (isset($_SESSION['user_code'])) {
+    $user_code = $_SESSION['user_code'];
+} 
+
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 $conn->set_charset("utf8");
@@ -36,14 +45,15 @@ if ($conn->connect_error) {
 try {
     $conn->begin_transaction();
 
-    $stmt = $conn->prepare("INSERT INTO reservation (start_date, end_date, created_at) VALUES (?, ?, NOW())");
-    $stmt->bind_param("ss", $start_date_str, $end_date_str);
+    $stmt = $conn->prepare("INSERT INTO reservation (start_date, end_date, user_code, created_at) VALUES (?, ?, ?, NOW())");
+    $stmt->bind_param("sss", $start_date_str, $end_date_str, $user_code);
     if (!$stmt->execute()) {
         throw new Exception("שגיאה בהכנסת הזמנה: " . $stmt->error);
     }
     $reservation_id = $conn->insert_id;
     $stmt->close();
 
+    // עדכון זמינות - כל יום בנפרד
     $current = clone $start_date;
     while ($current <= $end_date) {
         $date_str = $current->format('Y-m-d');
@@ -65,7 +75,7 @@ try {
             $stmt->execute();
             $stmt->close();
         } else {
-            $default_spots = 3;
+            $default_spots = 49; // הורדת מקום אחד מהמספר המקורי של 50
             $stmt = $conn->prepare("INSERT INTO Availability (date, available_spots) VALUES (?, ?)");
             $stmt->bind_param("si", $date_str, $default_spots);
             $stmt->execute();
@@ -76,7 +86,14 @@ try {
     }
 
     $conn->commit();
-    echo json_encode(['success' => true, 'reservation_id' => $reservation_id]);
+    
+    // הכנה להפניה לדף הצלחה
+    echo json_encode([
+        'success' => true, 
+        'reservation_id' => $reservation_id,
+        'user_code' => $user_code,
+        'message' => 'ההזמנה נשמרה בהצלחה'
+    ]);
 
 } catch (Exception $e) {
     $conn->rollback();
