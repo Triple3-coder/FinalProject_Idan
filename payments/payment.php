@@ -1,141 +1,139 @@
-<?php include '../../header.php'; ?>
+<?php 
+
+if (isset($_GET['reservation_id']) && isset($_GET['total_payments'])) {
+    $reservation_id = $_GET['reservation_id'];
+    $total_payments = $_GET['total_payments'];
+
+} else {
+    //header("Location: mainpage.php");
+    exit;
+}
+
+?>
 <!DOCTYPE html>
 <html lang="he">
 <head>
+    <script src="https://www.paypal.com/sdk/js?client-id=AZsMEPgdZ8ij16miVWreeoc4U3GztW24GFo6a3HwYJV3Z6xJ7Lx7RVgYNgV0yts8wEWsQvvnowgUiWhr&currency=ILS"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>תשלום - פנסיון כלבים</title>
     <style>
-        /* העיצוב נשאר כפי שהיה */
         body {
-            font-family: Arial, sans-serif;
-            direction: rtl;
-            background: linear-gradient(120deg, #fefcea, #f1da36);
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            width: 60%;
-            margin: auto;
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            margin-top: 50px;
-        }
-        h2 {
-            text-align: center;
-            color: #444;
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-        .button-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .btn {
-            padding: 12px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px;
-            transition: 0.3s;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .btn-secondary {
-            background-color: #28a745;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background-color: #218838;
-        }
-        form {
-            display: none;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            font-size: 16px;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-        .error {
-            color: red;
-            font-size: 14px;
-            display: none;
-            margin-top: 5px;
-        }
-        .receipt {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            background: #f9f9f9;
-        }
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #89f7fe, #66a6ff);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* מיכל מרכזי */
+.container {
+    max-width: 1000px;
+    width: 90%;
+    margin-top: 50px;
+    background-color:rgb(248, 239, 185);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* סגנון פרטי ההזמנה */
+.order-details {
+    width: 100%;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* אריזת הפרטים - שורה של שני ה-divים */
+.details-wrapper {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+/* כל אחד מהקופסאות של הפרטים */
+.detail-box {
+    flex: 1;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.payment-method-container {
+    display: flex;
+    flex-direction: column; /* עיצוב אחיד אנכי */
+    align-items: center; /* מרכז אופקי */
+    width: 100%;
+    max-width: 700px;
+    margin: 30px auto;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* הכותרת בתוך הקונטיינר */
+.payment-title {
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: #333;
+    text-align: center;
+}
+
+#paypal-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* תעשה את הכפתורים לרוחב מלא של ההורה */
+    max-width: 600px; /* מגבלת רוחב מרוצה */
+    margin: 30px auto; /* מרווח סביב ומרכז אופקי בצורה אוטומטית */
+    padding: 20px;
+    background-color: #fff; /* רקע לבן כדי להבליט את הכפתורים */
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+/* רווח כללי */
+.footer {
+    margin-top: 40px;
+    font-size: 1em;
+    color: #555;
+    text-align: center;
+}
+
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h2>בחר שיטת תשלום</h2>
-        <div class="button-container">
-            <button type="button" class="btn btn-primary" onclick="showCreditCardForm()">תשלום בכרטיס אשראי</button>
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='https://www.paypal.com'">תשלום באמצעות PayPal</button>
+        <div class="details-wrapper">
+            <div class="detail-box">
+                <strong>מספר הזמנה:</strong> <span id="orderId"></span>
+            </div>
+            <div class="detail-box">
+                <strong>סכום לתשלום:</strong> <span id="totalAmount"></span> 
+            </div>
         </div>
 
-        <form id="creditCardForm" onsubmit="return handlePayment(event)">
-            <div class="form-group">
-                <label for="fullName">שם מלא</label>
-                <input type="text" id="fullName" maxlength="50" placeholder="הכנס את שמך המלא">
-                <div class="error">שדה חובה</div>
-            </div>
-            <div class="form-group">
-                <label for="idNumber">תעודת זהות</label>
-                <input type="text" id="idNumber" maxlength="9" placeholder="הכנס תעודת זהות">
-                <div class="error">הכנס תעודת זהות חוקית (9 ספרות)</div>
-            </div>
-            <div class="form-group">
-                <label for="cardNumber">מספר כרטיס אשראי</label>
-                <input type="text" id="cardNumber" maxlength="16" placeholder="הכנס מספר כרטיס (16 ספרות)">
-                <div class="error">הכנס מספר כרטיס תקין</div>
-            </div>
-            <div class="form-group">
-                <label for="expiry">תוקף הכרטיס (MM/YY)</label>
-                <input type="text" id="expiry" maxlength="5" placeholder="לדוגמה: 12/25">
-                <div class="error">הכנס תוקף תקין</div>
-            </div>
-            <div class="form-group">
-                <label for="cvv">3 ספרות בגב הכרטיס (CVV)</label>
-                <input type="text" id="cvv" maxlength="3" placeholder="לדוגמה: 123">
-                <div class="error">הכנס קוד CVV תקין</div>
-            </div>
-            <div class="button-container">
-                <button type="submit" class="btn btn-primary">שלם</button>
-            </div>
-        </form>
-
-        <div id="receipt" class="receipt">
-            <h3>קבלה</h3>
-            <p><strong>שם מלא:</strong> <span id="receiptName"></span></p>
-            <p><strong>תעודת זהות:</strong> <span id="receiptId"></span></p>
-            <p><strong>אמצעי תשלום:</strong> כרטיס אשראי</p>
-            <p>תודה רבה על התשלום!</p>
+        <div class="payment-method-container">
+            <h2 class="payment-title">בחר שיטת תשלום</h2>
+            <div id="paypal-button-container"></div>
         </div>
     </div>
 
@@ -144,6 +142,13 @@
     </div>
 
     <script>
+        // קבלת פרטי ההזמנה
+        var orderId = <?php echo json_encode($_GET['reservation_id'] ?? "לא ידוע"); ?>;
+        var totalAmount = <?php echo json_encode($_GET['total_payments'] ?? "0"); ?>;
+
+        document.getElementById("orderId").textContent = orderId;
+        document.getElementById("totalAmount").textContent = totalAmount+'₪';
+
         function showCreditCardForm() {
             document.getElementById('creditCardForm').style.display = 'block';
         }
@@ -151,7 +156,7 @@
         function validateForm() {
             let isValid = true;
             document.querySelectorAll('.error').forEach(error => error.style.display = 'none');
-            
+
             function checkField(id, regex, errorMsg) {
                 let field = document.getElementById(id);
                 if (!regex.test(field.value.trim())) {
@@ -169,16 +174,59 @@
             
             return isValid;
         }
+        //מושך את התשלום הרצוי מההזמנה 
+        var totalAmount = <?php echo json_encode($total_payments); ?>;
+        paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    reference_id: orderId,
+                    amount: {value: totalAmount // הסכום הרצוי
+                        }
+                }]
+            });
+    },
+    onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+            //alert('התשלום הצליח! תודה לך, ' + details.payer.name.given_name);
+            fetch('update_order_status.php', {
+                    method: 'POST',
+                    headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reservation_id: <?php echo json_encode($reservation_id); ?>,
+                status: 'paid' // מעדכן לסטטוס paid
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('התשלום הצליח! תודה לך, ' + details.payer.name.given_name);
+                
+                var reservationID = <?php echo json_encode($reservation_id); ?>;
+                var totalPay = <?php echo json_encode($total_payments); ?>;
 
-        function handlePayment(event) {
-            event.preventDefault();
-            if (validateForm()) {
-                document.getElementById('creditCardForm').style.display = 'none';
-                document.getElementById('receipt').style.display = 'block';
-                document.getElementById('receiptName').textContent = document.getElementById('fullName').value;
-                document.getElementById('receiptId').textContent = document.getElementById('idNumber').value;
+                setTimeout(() => {
+                    window.location.href = `./success.php?id=${reservationID}&totalAmount=${totalPay}`;
+                }, 1000);
+            } else {
+                alert('שגיאה בעדכון הסטטוס: ' + data.error);
             }
-        }
-    </script>
+        });
+    });
+    
+    },
+    onCancel: function(data) {
+        alert('התשלום בוטל.');
+    },
+    onError: function(err) {
+        console.error('שגיאה בתהליך התשלום:', err);
+        alert('אירעה שגיאה, נסה שוב.');
+    }
+}).render('#paypal-button-container');
+
+</script>
+
 </body>
 </html>
