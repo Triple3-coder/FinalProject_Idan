@@ -14,7 +14,7 @@
     <h1>הזמנת מקום בפנסיון</h1>
     <div id="price-info" class="price-info">
     <h3>מחיר ליום בפנסיון</h3>
-    <p>מחיר רגיל: <span>50</span> ש"ח</p>
+    <p>מחיר רגיל: <span id=lodge_price>0</span> ש"ח</p>
     </div>
     <form action="reservationServerUpdate.php" method="POST">
     <div class="reservation-form">
