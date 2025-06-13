@@ -1,10 +1,10 @@
+/* עיצוב כללי לדף */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f4f8;
-    direction: rtl;
+    font-family: 'Rubik', Arial, sans-serif;
+    background-color: #f4f4f4;
     margin: 0;
     padding: 0;
-    user-select: none; /* מונע סימון טקסט */
+    direction: rtl;
 }
 
 .container {
@@ -13,75 +13,238 @@ body {
     padding: 20px;
 }
 
-h1, h2 {
-    font-family: 'Arial', sans-serif; /* שינוי פונטים */
+h1 {
+    color: #2E6A29;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    position: relative;
+    padding-bottom: 15px;
 }
 
+h1:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #4CAF50, #6FCF7C);
+    border-radius: 2px;
+}
+
+/* עיצוב השירותים */
 .services {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
 }
 
 .service {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-    transition: transform 0.25s ease; 
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    padding-bottom: 70px; /* מרווח בתחתית עבור הצ'קבוקס */
 }
 
-.service label {
-    display: block;
-    margin-top: 10px;
+.service:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .service img {
     width: 100%;
-    height: auto;
-    border-radius: 8px;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 3px solid #4CAF50;
 }
 
-.service:hover {
-    transform: scale(1.05);
-    background-color:#dadbf8;
-    border-color: #b0b0b0;
+.service h2 {
+    margin: 15px 20px 10px;
+    color: #333;
+    font-size: 1.4em;
+}
+
+.service p {
+    margin: 0 20px 15px;
+    color: #666;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.service .price {
+    display: block;
+    margin: 0 20px 15px;
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 1.1em;
+}
+
+.service label {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    background: #f7f7f7;
+    padding: 10px;
+    border-top: 1px solid #eee;
+    transition: background-color 0.3s ease;
+}
+
+.service:hover label {
+    background: #e8f5e9;
+}
+
+.service-select {
+    margin-left: 5px;
+    transform: scale(1.2);
     cursor: pointer;
 }
 
-.price {
-    font-weight: bold;
-    font-size: 1.2rem; /* גודל גופן גדול יותר */
-    color: #ff5722;
-}
-
+/* עיצוב הסיכום */
 .summary {
-    background-color: #f8f8f8; 
-    border-radius: 8px; 
-    padding: 20px; 
-    text-align: center; 
-    margin-top: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* צל לאיזון */
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    text-align: center;
 }
 
-.summary .highlight {
-    font-size: 24px;
-    font-weight: bold; 
-    color: #4f58d9; /* צבע טקסט שונה */
+.summary h2 {
+    color: #2E6A29;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.8em;
 }
 
+.summary p {
+    font-size: 1.2em;
+    margin-bottom: 25px;
+}
+
+#total-price {
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 1.3em;
+}
+
+/* עיצוב כפתור */
 #checkout-button {
-    background-color: #5cb85c; 
-    color: white; 
-    border: none; /* הפסקת גבולות */
-    border-radius: 5px; 
-    padding: 10px 20px; 
-    font-size: 16px;
-    cursor: pointer; /* מצביע בעת חישה על הכפתור */
-    margin-top: 15px;
-    transition: background-color 0.3s; /* מעבר חלק לצבע */
+    background: linear-gradient(to right, #4CAF50, #6FCF7C);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.1em;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    display: block;
+    margin: 0 auto;
+    width: 80%;
+    max-width: 350px;
 }
 
 #checkout-button:hover {
-    background-color: #117c11; /* צבע רקע כאשר מחזיקים בעכבר */
+    background: linear-gradient(to right, #3d9740, #5fb86a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+#checkout-button:active {
+    transform: translateY(0);
+}
+
+/* עיצוב נוסף */
+.service-selected {
+    border: 2px solid #4CAF50;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.service-selected label {
+    background: #e8f5e9;
+    font-weight: bold;
+}
+
+/* אנימציה */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.selected-animation {
+    animation: pulse 0.5s;
+}
+
+/* התאמה למובייל */
+@media (max-width: 768px) {
+    .services {
+        grid-template-columns: 1fr;
+    }
+    
+    .service {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    #checkout-button {
+        width: 100%;
+    }
+}
+
+/* הודעות */
+.message {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* קלאס חדש לטעינה */
+.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+#loading-spinner {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border: 4px solid rgba(76, 175, 80, 0.2);
+    border-top: 4px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
