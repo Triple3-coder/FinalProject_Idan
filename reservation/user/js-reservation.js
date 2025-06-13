@@ -1,27 +1,3 @@
-class Reservation {
-    constructor(startDate, endDate) {
-        this.startDate = new Date(startDate.split('/').reverse().join('-'));
-        this.endDate = new Date(endDate.split('/').reverse().join('-'));
-    }
-
-    getDateRange() {
-        let dates = [];
-        let currentDate = new Date(this.startDate);
-        while (currentDate <= this.endDate) {
-            dates.push(this.formatDate(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        return dates;
-    }
-
-    formatDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    }
-}
-
 $(document).ready(function() {
     const dateFormat = 'dd/mm/yy';
     let unavailableDates = [];
@@ -36,10 +12,8 @@ $(document).ready(function() {
     $('#start-date, #end-date').datepicker({
         dateFormat: dateFormat,
         minDate: 0, // מונע בחירה של תאריכים עבר
+        //כאן יש בדיקה על התאריכים
         onSelect: function() {
-            validateAndUpdateDates();
-        },
-        onClose: function() {
             validateAndUpdateDates();
         },
         beforeShowDay: function(date) {
@@ -64,37 +38,33 @@ $(document).ready(function() {
         }
     });
 
-    // בדיקה נוספת כאשר השדה מאבד פוקוס
-    $('#start-date, #end-date').on('blur', function() {
-        validateAndUpdateDates();
-    });
-
-    // שליחה של הימים והמשך הזמנה - נתפס על ידי הקוד החדש בדף reservation.php
+    // שליחה של הימים והמשך הזמנה - נתפס על ידי הקוד בדף reservation.php
     $('#submit').on('click', function(e) {
         e.preventDefault();
         const startDate = $('#start-date').val();
         const endDate = $('#end-date').val();
         const totalPrice = parseFloat($('#total-price').text().replace(/[^0-9.-]+/g, ''));
         
-        // Show a loading message
+        // הודעה על קיום הזמנה והסרת עיצוב
         $('#message').text('מעבד את ההזמנה...').removeClass('error-message').addClass('processing-message');
         
         if (startDate && endDate) {
-            // Log values for debugging
+            // לוג עבורנו
             console.log("Submitting reservation:", {
                 startDate: startDate,
                 endDate: endDate,
                 totalPrice: totalPrice
             });
             
-            // First check for conflicts
+            // בדיקה עבור תאריכים תקינים וזמינות תאריכים שכבר נבחרו בעבר ושליחה לעדכון מחיר
             checkReservationConflict(startDate, endDate, totalPrice);
         } else {
+            //במידה וחסר תאריכים יש שגיאה
             $('#message').text('אנא מלא את כל השדות.');
             $('#message').addClass('error-message');
         }
     });
-
+    //פונקציה לבדיקת המחיר של הלינה היומי
     function loadDailyPrice() {
         $.getJSON('get_daily_price.php', function(response) {
             if (response.success) {
@@ -112,7 +82,7 @@ $(document).ready(function() {
             dailyPrice = 0;
         });
     }
-
+    //פונקציה בדיקת תאריכים זמינים
     function loadUnavailableDates() {
         console.log('Loading unavailable dates...');
         $.getJSON('get_unavailable_dates.php', function(data) {
@@ -141,6 +111,7 @@ $(document).ready(function() {
                 }
                 return [true, "", ""];
             });
+             $('#start-date, #end-date').datepicker('refresh');
             
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error('Failed to load unavailable dates:', textStatus, errorThrown);
@@ -148,7 +119,7 @@ $(document).ready(function() {
             unavailableDates = [];
         });
     }
-
+    //פונקציית בדיקה של טווח תאריכים אם נבחרו ותקינותם
     function checkReservationConflict(startDate, endDate, totalPrice) {
         $.ajax({
             type: "POST",
@@ -215,90 +186,67 @@ $(document).ready(function() {
             }
         });
     }
+//פונקציית בדיקת תאריכים שנבחרו
+function validateAndUpdateDates() {
+    const startDate = $('#start-date').val();
+    const endDate = $('#end-date').val();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    function validateAndUpdateDates() {
-        const startDate = $('#start-date').val();
-        const endDate = $('#end-date').val();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    // בדיקת פורמט ותקינות התאריכים
+    let isStartValid = true;
+    let isEndValid = true;
+    //אם תאריך הסיום לפני תאריך ההתחלה נקיים שגיאה ולא ניתן להמשיך הזמנה
+    if(endDate<startDate)
+    {
+        console.log('תאריך סיום מוקדם מתאריך התחלה');
+        $('.message').text('תאריך היציאה חייב להיות לאחר תאריך הכניסה').removeClass('success-message').addClass('error-message');
+        isEndValid = false;
+        $('#end-date').val('');//מניעה להמשך הזמנה מחיקת תאריך סיום
+        return;
+    }
 
-        // בדיקת פורמט ותקינות התאריכים
-        let isStartValid = true;
-        let isEndValid = true;
+    // בדיקה אם יש תאריכים חסומים בטווח התאריכים
+    if (startDate && endDate && isStartValid && isEndValid) {
+        let currentDate = new Date(startDate.split('/').reverse().join('-'));
+        let endDateObj = new Date(endDate.split('/').reverse().join('-'));
+        //לולאה שעוברת על תאריכים שבחר המשתמש
+        while (currentDate <= endDateObj) {
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const year = currentDate.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
 
-        if (startDate) {
-            const startParts = startDate.split("/");
-            if (startParts.length === 3) {
-                const startDateObj = new Date(startParts[2], startParts[1] - 1, startParts[0]);
-                if (isNaN(startDateObj.getTime()) || startDateObj < today) {
-                    $('#start-date').val('');
-                    isStartValid = false;
-                    $('#message').text('תאריך התחלה לא תקין או בעבר').addClass('error-message');
-                } else if (unavailableDates.includes(startDate)) {
-                    $('#start-date').val('');
-                    isStartValid = false;
-                    $('#message').text('תאריך ההתחלה אינו זמין').addClass('error-message');
-                }
-            } else {
-                $('#start-date').val('');
-                isStartValid = false;
+            if (unavailableDates.includes(formattedDate)) {
+                $('.message').text('אחד או יותר מהתאריכים בתקופה שבחרת אינם זמינים.').addClass('error-message');
+                updateBookingSummary('', ''); // עדכן את הסיכום
+                return;
             }
-        }
 
-        if (endDate) {
-            const endParts = endDate.split("/");
-            if (endParts.length === 3) {
-                const endDateObj = new Date(endParts[2], endParts[1] - 1, endParts[0]);
-                if (isNaN(endDateObj.getTime()) || endDateObj < today) {
-                    $('#end-date').val('');
-                    isEndValid = false;
-                    $('#message').text('תאריך סיום לא תקין או בעבר').addClass('error-message');
-                } else if (unavailableDates.includes(endDate)) {
-                    $('#end-date').val('');
-                    isEndValid = false;
-                    $('#message').text('תאריך הסיום אינו זמין').addClass('error-message');
-                }
-            } else {
-                $('#end-date').val('');
-                isEndValid = false;
-            }
-        }
-
-        // בדיקה אם תאריך סיום לפני תאריך התחלה
-        if (startDate && endDate && isStartValid && isEndValid) {
-            if (!isValidDateRange(startDate, endDate)) {
-                $('#end-date').val('');
-                $('#message').text('תאריך היציאה חייב להיות לאחר תאריך הכניסה').addClass('error-message');
-                isEndValid = false;
-            }
-        }
-
-        // עדכון הסיכום רק אם התאריכים תקינים
-        if (isStartValid && isEndValid) {
-            $('#message').text('').removeClass('error-message');
-            updateBookingSummary($('#start-date').val(), $('#end-date').val());
-        } else {
-            updateBookingSummary('', '');
+            currentDate.setDate(currentDate.getDate() + 1);
         }
     }
 
-    function isValidDateRange(startDate, endDate) {
-        const start = new Date(startDate.split('/').reverse().join('-'));
-        const end = new Date(endDate.split('/').reverse().join('-'));
-        return start <= end;
+    // עדכון הסיכום רק אם התאריכים תקינים
+    if (isStartValid && isEndValid) {
+        $('.message').text('').removeClass('error-message').removeClass('success-message');
+        updateBookingSummary($('#start-date').val(), $('#end-date').val());
+    } else {//במידה ולא תקין ימחק את התאריכים 
+        updateBookingSummary('', '');
     }
 
-    // פונקציה משופרת שמעדכנת את כמות הימים והמחיר הכולל
+}
+
+    // פונקציה שמעדכנת את כמות הימים והמחיר הכולל של הזמנה
     function updateBookingSummary(start, end) {
-        // איפוס הודעות שגיאה
-        $('#message').text('').removeClass('error-message');
         
-        // לבדוק אם אחד התאריכים לא קיים
+        //לבדוק אם אחד התאריכים חסרים - ואיפוס הדף
         if (!start || !end) {
             $('#total-days').text('0 ימים');
             $('#total-price').text('0 ₪');
             $('#total-price-value').val(0); // עדכון של שדה מוסתר
             $('.price-breakdown').hide();
+            $('#end-date').val(''); // עדכון תאריך סיום ריק שלא יוכל להמשיך בהזמנה
             return;
         }
     
@@ -307,28 +255,29 @@ $(document).ready(function() {
         const endParts = end.split("/");
         const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
         const endDate = new Date(endParts[2], endParts[1] - 1, endParts[0]);
-        
+        //לוג בדיקה עבורנו לתאריכים
         console.log("Start Date:", startDate);
         console.log("End Date:", endDate);
 
-        // בדיקת תאריכים תקינים
+        // בדיקת אם אחד התאריכים חסרים שלא ימשיך הזמנה
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
             $('#total-days').text('0 ימים');
             $('#total-price').text('0 ₪');
             $('#total-price-value').val(0); // עדכון של שדה מוסתר
             $('.price-breakdown').hide();
+            $('#end-date').val(''); // עדכון תאריך סיום ריק שלא יוכל להמשיך בהזמנה
             return;
         }
     
         // חישוב ההפרש בין התאריכים
         const timeDiff = endDate - startDate;
-        const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1; // +1 כי כולל את יום ההגעה
+        const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1; // +1 חישוב כמות ימים, כולל את יום ההגעה
         
         console.log("Time Difference (ms):", timeDiff);
         console.log("Days calculated:", dayDiff);
         
         // עדכון תצוגת הימים והמחיר
-        if (dayDiff >= 1) {
+        if (dayDiff >= 1) {//אם מדובר ביום אחד ומעלה נעדכן מחיר וימים
             $('#total-days').text(dayDiff + ' ימים');
             
             if (dailyPrice > 0) {
@@ -342,11 +291,12 @@ $(document).ready(function() {
                 $('#total-price-value').val(0); // עדכון של שדה מוסתר
                 $('.price-breakdown').hide();
             }
-        } else {
+        } else {//במידה ויש בעיה או חוסר בימים מבצע איפוס
             $('#total-days').text('0 ימים');
             $('#total-price').text('0 ₪');
             $('#total-price-value').val(0); // עדכון של שדה מוסתר
             $('.price-breakdown').hide();
+            $('#end-date').val(''); // עדכון תאריך סיום ריק שלא יוכל להמשיך בהזמנה
         }
     }
 });
