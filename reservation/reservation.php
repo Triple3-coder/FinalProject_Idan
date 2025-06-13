@@ -1,5 +1,6 @@
 <?php
-//header('Content-Type: application/json');
+header('Content-Type: application/json');
+
 
 $servername = "localhost";
 $username = "itayrm_ItayRam";
@@ -75,8 +76,8 @@ try {
     }
 
     $conn->commit();
-    //echo json_encode(['success' => true, 'reservation_id' => $reservation_id]);
-//במידה ויש שגיאה זה השלב שהוא מוחק את ההזמנה שניסיתי ליצור וזורק שגיאה
+    echo json_encode(['success' => true, 'reservation_id' => $reservation_id]);
+
 } catch (Exception $e) {
     $conn->rollback();
 
@@ -87,7 +88,7 @@ try {
         $stmt->close();
     }
 
-    //echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
 $conn->close();
