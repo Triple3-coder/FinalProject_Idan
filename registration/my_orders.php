@@ -1,6 +1,8 @@
 <?php
-session_start();
 include '../../header.php';
+//דף ההזמנות של משתמש
+//בנוסף הקוד מטפל באורח דינמי בביטולי הזמנות ומעדכן את מלאי המקומות בלוח הזמנות
+//קיים מעבר לתשלום בדף זה
 
 // נתוני חיבור לבסיס הנתונים
 $servername = "localhost";
@@ -17,42 +19,44 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+//הצבת הסשן של המשתמש לאחר בדיקה אם קיים
 $user_code = '';
-// נסה לקבל מ-session אם קיים
 if (isset($_SESSION['user_code'])) {
     $user_code = $_SESSION['user_code'];
-} 
-// אם אין גישה למשתמש, נציג הודעה מתאימה בהמשך
-else if (isset($_SESSION['username'])) {
+} else if (isset($_SESSION['username'])) {
     $user_code = $_SESSION['username'];
 }
 
-// טיפול בביטול הזמנה
+//טיפול בביטול הזמנה
+//אם נשלחה קריאה לביטול בודקים אם הוא מורשה לבטל
 $cancel_message = '';
 if (isset($_POST['cancel_reservation']) && isset($_POST['reservation_id'])) {
     $reservation_id = $_POST['reservation_id'];
-    
-    // וידוא שההזמנה שייכת למשתמש המחובר
+    //בודקים אם קוד משתמש קיים
     if (!empty($user_code)) {
-        $check_sql = "SELECT COUNT(*) as count FROM reservation WHERE id = ? AND user_code = ?";
+        // מוודא שההזמנה שייכת למשתמש 
+        $check_sql = "SELECT start_date, end_date FROM reservation WHERE id = ? AND user_code = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("is", $reservation_id, $user_code);
         $check_stmt->execute();
-        $check_result = $check_stmt->get_result();
-        $check_row = $check_result->fetch_assoc();
-        
-        if ($check_row['count'] > 0) {
-            // ביטול ההזמנה
-            $cancel_sql = "DELETE FROM reservation WHERE id = ?";
-            $cancel_stmt = $conn->prepare($cancel_sql);
-            $cancel_stmt->bind_param("i", $reservation_id);
-            
-            if ($cancel_stmt->execute()) {
-                $cancel_message = '<div class="alert alert-success">ההזמנה בוטלה בהצלחה!</div>';
-                // רענון העמוד אחרי 2 שניות
+        $result = $check_stmt->get_result();
+        //בודקים אם יש הזמנה לביטול אם כן מבטלים
+        if ($result && $result->num_rows > 0) {
+            //מושך את התאריכים של ההזמנה שרוצים לבטל
+            $row = $result->fetch_assoc();
+            $start_date_str = $row['start_date'];
+            $end_date_str = $row['end_date'];
+            // עדכון הסטטוס לבוטלה
+            $update_sql = "UPDATE reservation SET status = 'deleted' WHERE id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("i", $reservation_id);
+            if ($update_stmt->execute()) {
+                $cancel_message = '<div class="alert alert-success">ההזמנה בוטלה! צוות הפנסיון ייצור איתך קשר כדי לזכות את העסקה.</div>';
+                // רענן את הדף לאחר 2 שניות
                 echo '<script>setTimeout(function() { window.location.href = window.location.pathname; }, 2000);</script>';
-            } else {
-                $cancel_message = '<div class="alert alert-error">אירעה שגיאה בביטול ההזמנה.</div>';
+                restoreAvailabilityForCancellation($conn, $start_date_str, $end_date_str);
+            }else {
+                $cancel_message = '<div class="alert alert-error">אירעה שגיאה בעדכון ההזמנה.</div>';
             }
         } else {
             $cancel_message = '<div class="alert alert-error">אין הרשאה לבטל הזמנה זו או שההזמנה לא קיימת.</div>';
@@ -60,26 +64,66 @@ if (isset($_POST['cancel_reservation']) && isset($_POST['reservation_id'])) {
     } else {
         $cancel_message = '<div class="alert alert-error">עליך להתחבר כדי לבטל הזמנות.</div>';
     }
+    //סגירת עדכון 
+    $update_stmt->close();
+}
+//פונקציה שמחזירה את כל הימים של ההזמנה שבוטלה
+function restoreAvailabilityForCancellation($conn, $start_date_str, $end_date_str) {
+    $start_date_obj = new DateTime($start_date_str);
+    $end_date_obj = new DateTime($end_date_str);
+    //לולאה שרצה על כל הימים של ההזמנה
+    $current = clone $start_date_obj;
+    while ($current <= $end_date_obj) {
+        $date_str = $current->format('Y-m-d');
+
+        // בדיקת זמינות מקום לתאריך
+        $stmt = $conn->prepare("SELECT id, available_spots FROM Availability WHERE date = ?");
+        $stmt->bind_param("s", $date_str);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $availability = $result->fetch_assoc();
+        $stmt->close();
+        //אם קיים יום כזה מוסיפים אותו לטבלה
+        if ($availability) {
+            // הוספת מקום ליום הזה
+            $stmt = $conn->prepare("UPDATE Availability SET available_spots = available_spots + 1 WHERE id = ?");
+            $stmt->bind_param("i", $availability['id']);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            //  אם בכלל הזמנות באותו יום אז מעדכנים את היום ל 50 ימים בסך הכל כברירת מחדל
+            $default_spots = 50; // מספר מקומות מקסימלי מותר
+            $stmt = $conn->prepare("INSERT INTO Availability (date, available_spots) VALUES (?, ?)");
+            $stmt->bind_param("si", $date_str, $default_spots);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $current->modify('+1 day');
+    }
 }
 
-// שליפת הזמנות לפי קוד משתמש
+//בודק את כל ההזמנות הקיימות וסטטוסים שלהן
+//במידה וקיים משתמש מראים לו את כל ההזמנות כולל חישוב של כמות הימים
 $orders = [];
 if (!empty($user_code)) {
     $sql = "SELECT *, 
             DATEDIFF(end_date, start_date) + 1 AS total_days,
             CASE 
-                WHEN end_date >= CURDATE() THEN 'active'
-                ELSE 'completed'
+                WHEN status = 'paid' THEN 'paid'
+                WHEN status = 'deleted' THEN 'deleted'
+                WHEN end_date >= CURDATE() AND status != 'paid' THEN 'active'
+                ELSE 'deleted'
             END AS status
             FROM reservation 
             WHERE user_code = ?
             ORDER BY start_date DESC";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $user_code);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+//במידה ויש תוצאות בטבלה אז מתעדכנת השורה עבור ההזמנות והכל נאסף לתוך מערך
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $orders[] = $row;
@@ -87,233 +131,288 @@ if (!empty($user_code)) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ההזמנות שלי - פנסיון לכלבים</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ההזמנות שלי - פנסיון לכלבים</title>
+ <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        .my-orders-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+        /* עיצוב כללי */
+        body {
             font-family: Arial, sans-serif;
-            direction: rtl;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
         }
-        
-        .my-orders-title {
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #343a40;
             text-align: center;
             margin-bottom: 30px;
-            color: #2c3e50;
         }
-        
-        .order-item {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+
+        /* עיצוב טבלה */
+        .table-container {
+            overflow-x: auto; /* הוספת גלילה אופקית אם הטבלה רחבה מדי */
         }
-        
-        .order-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+
+        .table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* הוספת צל לטבלה */
         }
-        
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e1e1e1;
+
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle; /* יישור אנכי לאמצע התא */
         }
-        
-        .order-dates {
-            font-weight: bold;
-            color: #3a7bd5;
+
+        .table th {
+            background-color: #f2f4f6;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase; /* הפיכת כותרות לעליונות */
+            letter-spacing: 0.05em; /* מרווח בין אותיות */
         }
-        
-        .order-details {
-            margin-bottom: 15px;
+
+        .table tbody tr:hover {
+            background-color: #f5f5f5;
+            transition: background-color 0.2s ease; /* מעבר חלק בעת ריחוף */
         }
-        
-        .order-detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            padding: 5px 0;
-        }
-        
-        .order-detail-row:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        
-        .detail-label {
-            color: #666;
+
+        /* סטטוסים */
+        .status-active {
+            color: #28a745;
             font-weight: bold;
         }
-        
-        .detail-value {
+
+        .status-paid {
+            color: #007bff;
             font-weight: bold;
         }
-        
-        .order-actions {
-            text-align: left;
-            margin-top: 10px;
+
+        .status-deleted {
+            color: #dc3545;
+            font-weight: bold;
         }
-        
-        .btn-cancel {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
+
+        /* כפתורים */
+        .btn {
             padding: 8px 15px;
-            border-radius: 4px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.3s ease;
+            font-size: 0.9rem;
+            white-space: nowrap; /* מניעת שבירת שורה בכפתור */
         }
-        
-        .btn-cancel:hover {
-            background-color: #c0392b;
+
+        .btn-cancel {
+            background-color: #dc3545;
+            color: white;
         }
-        
-        .no-orders {
-            text-align: center;
-            padding: 30px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            color: #7f8c8d;
-            margin-top: 30px;
+
+        .btn-pay {
+            background-color: #28a745;
+            color: white;
         }
-        
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        /* הודעות */
         .alert {
-            padding: 15px;
             margin-bottom: 20px;
-            border-radius: 4px;
+            padding: 10px 15px;
+            border-radius: 5px;
         }
-        
+
         .alert-success {
             background-color: #d4edda;
+            border-color: #c3e6cb;
             color: #155724;
-            border: 1px solid #c3e6cb;
         }
-        
+
         .alert-error {
             background-color: #f8d7da;
+            border-color: #f5c6cb;
             color: #721c24;
-            border: 1px solid #f5c6cb;
         }
-        
+
         .alert-warning {
             background-color: #fff3cd;
+            border-color: #ffeeba;
             color: #856404;
-            border: 1px solid #ffeeba;
         }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        
-        .status-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-completed {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-        
+
+        /* רספונסיביות */
         @media (max-width: 768px) {
-            .order-header {
-                flex-direction: column;
+
+            .table th,
+            .table td {
+                padding: 8px;
+                font-size: 0.9rem;
             }
-            
-            .order-detail-row {
-                flex-direction: column;
-                border-bottom: 1px solid #eee;
+
+            .btn {
+                padding: 5px 10px;
+                font-size: 0.8rem;
             }
-            
-            .detail-value {
-                margin-top: 5px;
-            }
+        }
+
+        /* סגנון לפילטרים */
+        .filters-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .filters-section .form-group {
+            margin-bottom: 15px;
+        }
+
+        .filters-section label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .filters-section .form-control {
+            border-radius: 5px;
+        }
+
+        .filters-section .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+
+        .filters-section .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <!-- בראש הדף נכלל header.php -->
-    
-    <div class="my-orders-container">
-        <h2 class="my-orders-title">ההזמנות שלי</h2>
-        
+
+<div class="container">
+        <h1>הזמנות הפנסיון שלי</h1>
+
         <?php echo $cancel_message; ?>
-        
+        <!--ברירות מחדל של תצוגה -->
         <?php if (empty($user_code)): ?>
-            <div class="alert alert-warning">עליך להתחבר למערכת כדי לצפות בהזמנות שלך.</div>
-            <div class="no-orders">
+            <div class="alert alert-warning">עליך להתחבר כדי לצפות בהזמנות שלך.</div>
+            <div class="text-center">
                 <p>אין הזמנות להצגה. אנא התחבר למערכת תחילה.</p>
             </div>
         <?php elseif (empty($orders)): ?>
-            <div class="no-orders">
-                <p>אין הזמנות להצגה</p>
-                <p>ניתן להזמין שהייה חדשה בפנסיון דרך דף "הזמנה חדשה"</p>
+            <div class="text-center">
+                <h3>אין הזמנות פעילות</h3>
+                <p>עדיין לא ביצעת הזמנות. ניתן להזמין שהייה חדשה דרך דף "הזמנה חדשה".</p>
+                <a href="../../reservation/user/reservation.php" class="btn-pay">הזמן עכשיו</a>
             </div>
         <?php else: ?>
-            <?php foreach ($orders as $row): ?>
-                <?php
-                    $status = $row['status'];
-                    $status_text = ($status == 'active') ? 'פעילה' : 'הושלמה';
-                    $status_class = ($status == 'active') ? 'status-active' : 'status-completed';
-                    
-                    // פורמט תאריכים
-                    $start_date = date("d/m/Y", strtotime($row['start_date']));
-                    $end_date = date("d/m/Y", strtotime($row['end_date']));
-                    $created_at = date("d/m/Y H:i", strtotime($row['created_at']));
-                ?>
-                <div class="order-item">
-                    <div class="order-header">
-                        <div class="order-dates">תאריכי שהייה: <?php echo $start_date; ?> - <?php echo $end_date; ?></div>
-                        <div>מספר הזמנה: <?php echo $row['id']; ?></div>
-                    </div>
-                    
-                    <div class="order-details">
-                        <div class="order-detail-row">
-                            <span class="detail-label">סטטוס:</span>
-                            <span class="detail-value"><span class="status-badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span></span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">מספר ימים:</span>
-                            <span class="detail-value"><?php echo $row['total_days']; ?></span>
-                        </div>
-                        
-                        <div class="order-detail-row">
-                            <span class="detail-label">תאריך יצירה:</span>
-                            <span class="detail-value"><?php echo $created_at; ?></span>
-                        </div>
-                    </div>
-                    
-                    <?php if ($status == 'active'): ?>
-                    <div class="order-actions">
-                        <form method="post" onsubmit="return confirm('האם אתה בטוח שברצונך לבטל הזמנה זו?')">
-                            <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="cancel_reservation" class="btn-cancel">ביטול הזמנה</button>
-                        </form>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>מספר הזמנה</th>
+                        <th>תאריכי שהייה</th>
+                        <th>סטטוס</th>
+                        <th>מספר ימים</th>
+                        <th>תאריך יצירה</th>
+                        <th>סכום לתשלום</th>
+                        <th>פעולות</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $row): ?>
+                        <tr>
+                            <td>
+                                <?php echo $row['id']; ?>
+                            </td>
+                            <td>
+                                <?php echo date("d/m/Y", strtotime($row['start_date'])); ?> -
+                                <?php echo date("d/m/Y", strtotime($row['end_date'])); ?>
+                            </td>
+                            <td>
+                                <span class="status-<?php echo $row['status']; ?>">
+                                    <?php
+                                    if ($row['status'] == 'active') {
+                                        echo 'פעילה';
+                                    } elseif ($row['status'] == 'paid') {
+                                        echo 'שולם';
+                                    } else {
+                                        echo 'בוטלה';
+                                    }
+                                    ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php echo $row['total_days']; ?>
+                            </td>
+                            <td>
+                                <?php echo date("d/m/Y H:i", strtotime($row['created_at'])); ?>
+                            </td>
+                            <td>
+                                <?php echo number_format($row['total_payments'], 2); ?> ש״ח
+                            </td>
+                            <td>
+                                <?php if ($row['status'] == 'active'): ?>
+                                    <!--כפתור ביטול הזמנה-->
+                                    <form method="post"
+                                        onsubmit="return confirm('האם אתה בטוח שברצונך לבטל הזמנה זו?')"
+                                        style="display: inline-block;">
+                                        <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
+                                        <button type="submit" name="cancel_reservation"
+                                            class="btn btn-cancel">ביטול הזמנה</button>
+                                    </form>
+                                    <!--כפתור תשלום הזמנה-->
+                                    <form action="../../payment/payment.php" method="get"
+                                        onsubmit="return confirm('ברצונך לשלם עבור הזמנה זו?')"
+                                        style="display: inline-block;">
+                                        <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
+                                        <input type="hidden" name="total_payments" value="<?php echo $row['total_payments']; ?>">
+                                        <button type="submit" name="pay_reservation" class="btn btn-pay">לתשלום
+                                            הזמנה</button>
+                                    </form>
+                                <!--טיפול בסטטוסים של הזמנות-->
+                                <?php elseif ($row['status'] == 'paid'): ?>
+                                    <span class="text-success">שולם</span>
+                                <?php elseif ($row['status'] == 'deleted'): ?>
+                                    <span class="text-danger">בוטל</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         <?php endif; ?>
     </div>
-    
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <?php
     $conn->close();
-    include '../../footer.php';
     ?>
 </body>
 </html>
