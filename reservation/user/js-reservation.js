@@ -3,15 +3,17 @@ $(document).ready(function() {
     let unavailableDates = [];
     let dailyRate = 1; //ברירת מחדל אם אין קריאה לשרת
 
+    /*
     //משיכת מחיר לינה
-    $.getJSON('getLodgePrice.php', function(data) {
-            if (data && typeof data.price !== 'undefined') {
-                dailyRate = data.price;
-                $('#lodge_price').text(dailyRate);
-            }
-            updateBookingSummary();
-        });
-
+    $(document).ready(function() {
+        $.getJSON('getLodgePrice.php', function(data) {
+                if (data && typeof data.price !== 'undefined') {
+                    dailyRate = data.price;
+                    $('#lodge_price').text(dailyRate + ' ש"ח');
+                    }
+            });
+    });
+*/
     $('#start-date, #end-date').datepicker({
         dateFormat: dateFormat,
         minDate: 0,
@@ -31,7 +33,7 @@ $(document).ready(function() {
     function updateBookingSummary() {
         const startDate = $('#start-date').datepicker('getDate');
         const endDate = $('#end-date').datepicker('getDate');
-    
+
         if (startDate && endDate) {
             const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
             const totalAmount = days * dailyRate; // משתמש בערך הסטטי
@@ -78,4 +80,5 @@ $(document).ready(function() {
             $('#message').text('אנא מלא את כל השדות.');
         }
     });
+
 });
