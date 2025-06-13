@@ -193,7 +193,18 @@ input[type="text"]:focus {
     align-items: center;
 }
 
+#message{
+    display:none; 
+    background-color: #88b689; 
+    color: white; 
+    padding: 15px; 
+    margin-top: 20px; 
+    border-radius: 5px;
+}
+
 footer{
     background-color: #f8f9fa; padding: 20px; text-align: center;
 }
+
+
 

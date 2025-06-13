@@ -70,6 +70,32 @@ $(document).ready(function() {
             
             // עדכון לוח השנה
             updateCalendar(dateRange);
+
+            //הוספה של פעולות לדף הבא
+            fetch('reservation.php', { 
+                method: 'POST',
+                body: formData
+            })
+            //לאחר שיש הצלחה הוא עובר פה לדף הבא
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    setTimeout(function() {
+                        $('#message').text('ההזמנה בוצעה בהצלחה!');
+                        $('#message').show();
+                        //window.location.href = 'services/services.html';
+                    }, 2000);
+                } else {
+                    // הצגת הודעת שגיאה
+                    $('#message').text('יש בעיה בהזמנה!'); 
+                    $('#message').show();
+                }
+            })
+            .catch(error => {
+                document.getElementById('message').innerText = 'אירעה שגיאה, אנא נסה שוב מאוחר יותר.';
+                document.getElementById('message').style.display = 'block';
+            });
+
         } else {
             $('#message').text('אנא מלא את כל השדות.');
             // מחיקת התאריכים שנבחרו והכותרת
@@ -77,25 +103,6 @@ $(document).ready(function() {
             $('#total-days').text('0 ימים'); // לא נוסף ימים אם השדות ריקים
         }
     });
-
-//זה קוד שצריך לעדכן ברגע שמפעיל את השרת עם PHP
-    /*$('#submit').on('click', function() {
-    const startDate = $('#start-date').val();
-    const endDate = $('#end-date').val();
-    
-    if (startDate && endDate) {
-        $.post('path/to/your/php/file.php', {
-            start_date: startDate,
-            end_date: endDate
-        }, function(response) {
-            alert(response); // הצגת תגובה מהשרת
-        });
-    } else {
-        $('#message').text('אנא מלא את כל השדות.');
-        $('#selectedDatesHeader').hide();
-    }
-});
-*/
 
     function isValidDateRange(startDate, endDate) {
         const start = new Date(startDate.split('/').reverse().join('-'));

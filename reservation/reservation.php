@@ -1,97 +1,94 @@
 <?php
+//header('Content-Type: application/json');
+
 $servername = "localhost";
 $username = "itayrm_ItayRam";
 $password = "itay0547862155";
 $dbname = "itayrm_dogs_boarding_house";
 
+
+if (!isset($_POST['start_date']) || !isset($_POST['end_date'])) {
+    echo json_encode(['error' => 'חסר תאריך התחלה או סיום']);
+    exit;
+}
+
+
+$start_date = DateTime::createFromFormat('d/m/Y', $_POST['start_date']);
+$end_date = DateTime::createFromFormat('d/m/Y', $_POST['end_date']);
+
+if (!$start_date || !$end_date) {
+    echo json_encode(['error' => 'פורמט תאריך לא תקין']);
+    exit;
+}
+
+$start_date_str = $start_date->format('Y-m-d');
+$end_date_str = $end_date->format('Y-m-d');
+
 $conn = new mysqli($servername, $username, $password, $dbname);
+$conn->set_charset("utf8");
 
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    echo json_encode(['error' => 'שגיאה בחיבור למסד הנתונים']);
+    exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-// קבלת תאריכים מהטופס
-$start_date = $_POST["start_date"];
-$end_date = $_POST["end_date"];
+try {
+    $conn->begin_transaction();
 
-// פונקציה ליצירת רשימת תאריכים בין שני תאריכים
-function createDateRangeArray($strDateFrom,$strDateTo) {
-    $aryRange = [];
-
-    $iDateInterval = new DateInterval('P1D');
-
-    $iDateFrom = new DateTime($strDateFrom);
-    $iDateTo = new DateTime($strDateTo);
-
-    $iDateTo->modify('+1 day');
-
-    $iDatePeriod = new DatePeriod($iDateFrom, $iDateInterval, $iDateTo);
-
-    foreach ($iDatePeriod as $oDate) {
-        $aryRange[] = $oDate->format("Y-m-d");
+    $stmt = $conn->prepare("INSERT INTO reservation (start_date, end_date, created_at) VALUES (?, ?, NOW())");
+    $stmt->bind_param("ss", $start_date_str, $end_date_str);
+    if (!$stmt->execute()) {
+        throw new Exception("שגיאה בהכנסת הזמנה: " . $stmt->error);
     }
+    $reservation_id = $conn->insert_id;
+    $stmt->close();
 
-    return $aryRange;
-}
+    $current = clone $start_date;
+    while ($current <= $end_date) {
+        $date_str = $current->format('Y-m-d');
 
-// יצירת רשימת תאריכים
-$date_range = createDateRangeArray($start_date, $end_date);
+        $stmt = $conn->prepare("SELECT id, available_spots FROM Availability WHERE date = ?");
+        $stmt->bind_param("s", $date_str);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $availability = $result->fetch_assoc();
+        $stmt->close();
 
-// אתחול משתנה לבדיקת זמינות
-$all_dates_available = true;
-
-// בדיקה האם יש מקומות פנויים בכל התאריכים
-foreach ($date_range as $date) {
-    $sql = "SELECT available_spots FROM Availability WHERE date = '$date'";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        if ($row["available_spots"] <= 0) {
-            echo "אין מקומות פנויים בתאריך " . $date . "<br>";
-            $all_dates_available = false;
-        }
-    } else {
-        // אם התאריך לא קיים, נתייחס אליו כאילו אין מקומות פנויים
-        echo "אין מקומות פנויים בתאריך " . $date . " (תאריך לא קיים במערכת)<br>";
-        $all_dates_available = false;
-    }
-}
-
-// אם יש מקומות פנויים בכל התאריכים, המשך בתהליך ההזמנה
-if ($all_dates_available) {
-    // הכנסת הזמנה לטבלת reservation
-    $sql = "INSERT INTO reservation (start_date, end_date, created_at) VALUES ('$start_date', '$end_date', NOW())";
-
-    if ($conn->query($sql) === TRUE) {
-        $reservation_id = $conn->insert_id; // קבלת ה-ID של ההזמנה החדשה
-
-        // עדכון טבלת Availability
-        foreach ($date_range as $date) {
-            // בדיקה האם התאריך קיים
-            $sql = "SELECT available_spots FROM Availability WHERE date = '$date'";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                // התאריך קיים, עדכן את available_spots
-                $sql = "UPDATE Availability SET available_spots = available_spots - 1 WHERE date = '$date'";
-                $conn->query($sql);
-            } else {
-                // התאריך לא קיים, הוסף אותו עם 49 מקומות
-                $sql = "INSERT INTO Availability (date, available_spots) VALUES ('$date', 49)";
-                $conn->query($sql);
+        if ($availability) {
+            if ($availability['available_spots'] < 1) {
+                throw new Exception("אין מקומות זמינים בתאריך: $date_str");
             }
+
+            $stmt = $conn->prepare("UPDATE Availability SET available_spots = available_spots - 1 WHERE id = ?");
+            $stmt->bind_param("i", $availability['id']);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            $default_spots = 3;
+            $stmt = $conn->prepare("INSERT INTO Availability (date, available_spots) VALUES (?, ?)");
+            $stmt->bind_param("si", $date_str, $default_spots);
+            $stmt->execute();
+            $stmt->close();
         }
 
-        echo "הזמנה בוצעה בהצלחה! מספר הזמנה: " . $reservation_id;
-    } else {
-        echo "שגיאה בהוספת הזמנה: " . $conn->error;
+        $current->modify('+1 day');
     }
-} else {
-    echo "לא ניתן לבצע את ההזמנה עקב חוסר מקומות פנויים בתאריכים המבוקשים.";
-}
-}
-$conn->close();
 
+    $conn->commit();
+    //echo json_encode(['success' => true, 'reservation_id' => $reservation_id]);
+//במידה ויש שגיאה זה השלב שהוא מוחק את ההזמנה שניסיתי ליצור וזורק שגיאה
+} catch (Exception $e) {
+    $conn->rollback();
+
+    if (isset($reservation_id)) {
+        $stmt = $conn->prepare("DELETE FROM reservation WHERE id = ?");
+        $stmt->bind_param("i", $reservation_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    //echo json_encode(['error' => $e->getMessage()]);
+}
+
+$conn->close();
 ?>
