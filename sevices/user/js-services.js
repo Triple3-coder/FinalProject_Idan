@@ -1,31 +1,31 @@
 $(document).ready(function() {
-    // אתחול משתנים
+    // אתחול משתנים - מערך השירותים שנבחרו וסכום כולל
     let selectedServices = [];
     let totalPrice = 0;
     
-    // טיפול בבחירת שירות
+    // טיפול במרכיב בחירה של שירות עבור צ'קבוקס 
     $('.service-select').on('change', function() {
         const serviceContainer = $(this).closest('.service');
         const serviceType = $(this).val();
         const servicePrice = parseInt(serviceContainer.attr('data-price'));
         
         if ($(this).is(':checked')) {
-            // הוספת אנימציה כשנבחר
+            // אם שירות נבחר, מפעיל את פעילות האנימציה
             serviceContainer.addClass('service-selected selected-animation');
             setTimeout(() => {
                 serviceContainer.removeClass('selected-animation');
             }, 500);
             
-            // הוספה למערך השירותים הנבחרים
+            // הוספה למערך השירותים הנבחרים, סוג ומחיר
             selectedServices.push({
                 type: serviceType,
                 price: servicePrice
             });
         } else {
-            // הסרה מהעיצוב והמערך
+            // אם השירות הוסר, מסירים את העיצובים
             serviceContainer.removeClass('service-selected');
             
-            // מצא את האינדקס של השירות במערך ומחק אותו
+            // מעדכן מערך להסרת השירות שהוסר
             selectedServices = selectedServices.filter(service => service.type !== serviceType);
         }
         
@@ -37,7 +37,7 @@ $(document).ready(function() {
     function updateTotalPrice() {
         totalPrice = 0;
         
-        // חישוב המחיר הכולל
+        // חישוב המחיר משירותים שנבחרו
         selectedServices.forEach(service => {
             totalPrice += service.price;
         });
@@ -47,7 +47,7 @@ $(document).ready(function() {
         $('#hidden-total-price').val(totalPrice);
     }
     
-    // טיפול בשליחת הטופס
+    // טיפול בהגשת הטופס
     $('#services-form').on('submit', function(e) {
         e.preventDefault();
         
@@ -68,7 +68,7 @@ $(document).ready(function() {
                 console.log("התגובה התקבלה:", response);
                 
                 if (response.success) {
-                    // הפניה לדף הסיכום
+                    //  הפניה לדף הסיכום, במידה והפעולה הצליחה
                     window.location.href = 'summary.php';
                 } else {
                     alert('אירעה שגיאה: ' + response.message);
@@ -76,7 +76,7 @@ $(document).ready(function() {
                     $('#loading-spinner').hide();
                 }
             },
-            error: function(xhr, status, error) {
+            error: function(xhr, status, error) {//טיפול בשגיאות תקשורת עם השרת
                 console.error('שגיאה בשמירת השירותים:', error);
                 console.error('תוכן התגובה:', xhr.responseText);
                 alert('אירעה שגיאה בתקשורת עם השרת. אנא נסה שוב מאוחר יותר.');
@@ -86,14 +86,14 @@ $(document).ready(function() {
         });
     });
     
-    // בדיקה אם נבחרו שירותים
+    // טיפול בלחיצה על כפתור בחירת השירות צ'קבוקס
     $('#checkout-button').on('click', function(e) {
-    // אם אין שירותים נבחרים
+    // בדיקה אם נבחרו שירותים
     if (selectedServices.length === 0) {
-        e.preventDefault(); // מונע את הפעולה כברירת מחדל
+        e.preventDefault(); // מונע את ההגשה אם אין שירותים נבחרים ואז מקבל הודעה אם להמשיך ללא שירותים
         var continueWithoutServices = confirm('לא נבחרו שירותים. אתה בטוח שברצונך להמשיך ללא שירותים נוספים?');
         if (continueWithoutServices) {
-            // ממשיך את ההגשה גם אם לא נבחרו שירותים
+            //במידה ומאשר ללא שירותים נוספים, תתבצע שליחה של הטופס
             $('#services-form').submit();
         }
         // אם לא אישר, לא עושה כלום והמשתמש יכול לבחור מחדש

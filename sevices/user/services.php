@@ -1,12 +1,7 @@
 <?php 
 include '../../header.php';
-// התחלת סשן - חייב להיות בתחילת הקובץ ללא שום פלט קודם
 session_start();
 
-// לא כוללים קבצים חיצוניים שעלולים לשלוח פלט HTML
-// include '../../header.php'; // הסרנו את זה כי זה עלול לגרום לפלט HTML
-
-// התחברות למסד הנתונים לקבלת מחירי השירותים
 $servername = "localhost";
 $username = "itayrm_ItayRam";
 $password = "itay0547862155";
@@ -15,7 +10,6 @@ $dbname = "itayrm_dogs_boarding_house";
 $conn = new mysqli($servername, $username, $password, $dbname);
 $conn->set_charset("utf8");
 
-// בדיקת חיבור
 if ($conn->connect_error) {
     $error_message = "שגיאה בהתחברות למסד הנתונים: " . $conn->connect_error;
 }
@@ -45,9 +39,9 @@ try {
     $error_message = "שגיאה בשליפת מחירי השירותים: " . $e->getMessage();
 }
 
-// סגירת החיבור למסד הנתונים
 $conn->close();
 ?>
+<!--הדף הראשי של שירותים-->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -122,7 +116,7 @@ $conn->close();
                     </label>
                 </div>
             </div>
-            
+            <!-- אזור סיכום הזמנה-->
             <div class="summary">
                 <h2>סיכום מחיר</h2>
                 <p>מחיר שירותים נוספים: <span id="total-price">0</span> ₪</p>

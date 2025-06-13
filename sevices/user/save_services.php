@@ -1,11 +1,9 @@
 <?php
-// התחלת סשן
+//קוד ששומר את פרטי השירותים שנבחרו
 session_start();
 
-// הגדרת סוג התוכן ל-JSON
 header('Content-Type: application/json');
 
-// בדיקה שהבקשה היא מסוג POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'שיטת הבקשה אינה חוקית']);
     exit;
@@ -27,7 +25,7 @@ $totalAdditionalPrice = floatval($_POST['total_additional_price']);
 // פרסור המחרוזת JSON
 $selectedServices = json_decode($selectedServicesJson, true);
 
-// בדיקה שהפרסור הצליח
+// בדיקה שהצליח
 if ($selectedServices === null) {
     echo json_encode(['success' => false, 'message' => 'שגיאה בפרסור נתוני השירותים']);
     exit;

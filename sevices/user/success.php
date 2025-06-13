@@ -1,4 +1,5 @@
 <?php
+//דף הצלחה לאחר הוספה של הזמנה
 session_start();
 include '../../header.php';
 
@@ -7,7 +8,7 @@ if (!isset($_SESSION['current_reservation_id'])) {
     header('Location: reservation.php');
     exit;
 }
-
+//שמירת נתוני הזמנה,תאריכים בסשן
 $reservation_id = $_SESSION['current_reservation_id'];
 $start_date = $_SESSION['reservation_start_date_display'] ?? '';
 $end_date = $_SESSION['reservation_end_date_display'] ?? '';
@@ -163,7 +164,7 @@ $end_date = $_SESSION['reservation_end_date_display'] ?? '';
             <h2>תודה על הזמנתך בפנסיון הכלבים שלנו!</h2>
             <p>הזמנתך נקלטה במערכת ותטופל בהקדם. צוות הפנסיון ייצור איתך קשר לפני מועד ההגעה.</p>
         </div>
-        
+        <!--פרטי ההזמנה-->
         <div class="reservation-details">
             <div class="detail-item">
                 <span class="detail-label">מספר הזמנה:</span>

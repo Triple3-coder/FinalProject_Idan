@@ -1,14 +1,13 @@
 <?php
-// התחלת סשן בתחילת הקובץ - חשוב!
 session_start();
-include '../../header.php';
 
 // בדיקה שיש נתוני הזמנה ב-SESSION
 if (!isset($_SESSION['reservation']) || !isset($_SESSION['selected_services'])) {
     // אם אין נתונים, חזרה לדף הראשי
-    header('Location: reservation.php');
+    header('Location: ../reservation/reservation.php');
     exit;
 }
+
 
 // קבלת נתוני ההזמנה מה-SESSION
 $reservation = $_SESSION['reservation'];
@@ -221,7 +220,7 @@ $endDate = $reservation['end_date'] ?? '';
         <h1>סיכום הזמנה</h1>
         
         <div id="result-message"></div>
-        
+        <!--פרטי ההזמנה-->
         <div class="summary-section">
             <h2>פרטי הלינה</h2>
             <div class="summary-item">
@@ -237,7 +236,7 @@ $endDate = $reservation['end_date'] ?? '';
                 <span><?php echo number_format($totalLodgePrice, 0); ?> ₪</span>
             </div>
         </div>
-        
+        <!-- סיכום עבור שירותים שנבחרו-->
         <div class="summary-section">
             <h2>שירותים נוספים</h2>
             
@@ -272,7 +271,7 @@ $endDate = $reservation['end_date'] ?? '';
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-        
+        <!--סיכום סופי של הכל-->
         <div class="total-section">
             <div class="total-row">
                 <span>מחיר לינה:</span>
@@ -326,7 +325,8 @@ $endDate = $reservation['end_date'] ?? '';
                             
                             // הפניה לדף הצלחה אחרי 2 שניות
                             setTimeout(function() {
-                                window.location.href = "success.php";
+                                //window.location.href = "success.php";
+                                window.location.href = "../../registration/user/my_orders.php";
                             }, 2000);
                         } else {
                             // הצגת הודעת שגיאה
