@@ -1,8 +1,10 @@
 body {
     font-family: Arial, sans-serif;
+    background-color: #f0f4f8;
     direction: rtl;
     margin: 0;
     padding: 0;
+    user-select: none; /* מונע סימון טקסט */
 }
 
 .container {
@@ -11,8 +13,8 @@ body {
     padding: 20px;
 }
 
-h1 {
-    text-align: center;
+h1, h2 {
+    font-family: 'Arial', sans-serif; /* שינוי פונטים */
 }
 
 .services {
@@ -26,7 +28,12 @@ h1 {
     border-radius: 8px;
     padding: 10px;
     text-align: center;
-    transition: transform 0.2s;
+    transition: transform 0.25s ease; 
+}
+
+.service label {
+    display: block;
+    margin-top: 10px;
 }
 
 .service img {
@@ -37,11 +44,15 @@ h1 {
 
 .service:hover {
     transform: scale(1.05);
+    background-color:#dadbf8;
+    border-color: #b0b0b0;
+    cursor: pointer;
 }
 
 .price {
     font-weight: bold;
-    color: #d9534f;
+    font-size: 1.2rem; /* גודל גופן גדול יותר */
+    color: #ff5722;
 }
 
 .summary {
