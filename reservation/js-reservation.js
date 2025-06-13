@@ -37,24 +37,65 @@ $(document).ready(function() {
     });
 
     $('#end-date').datepicker({
-        dateFormat: dateFormat
+        dateFormat: dateFormat,
+        onSelect: function() {
+            const startDate = $('#start-date').val();
+            if (startDate && !isValidDateRange(startDate, $(this).val())) {
+                alert("תאריך היציאה חייב להיות לאחר תאריך הכניסה.");
+                $(this).val(''); // מחק את תאריך היציאה אם הוא לא תקין
+            }
+        }
     });
 
-    $('#submit').on('click', function() {
+    let selectedDates = []; // משתנה גלובלי לשמירת התאריכים שנבחרו
+    $('#submit').on('click', function() {//סיכום הזמנה
         const startDate = $('#start-date').val();
         const endDate = $('#end-date').val();
         
         if (startDate && endDate) {
+            // פורמט של התאריכים
+            const start = new Date(startDate.split('/').reverse().join('-'));
+            const end = new Date(endDate.split('/').reverse().join('-'));
+    
+            // חישוב מספר הימים בטווח
+            const totalDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1; // +1 כדי לכלול את התאריך הראשון
+            $('#total-days').text(totalDays + ' ימים'); // עדכון התצוגה
+    
             const reservation = new Reservation(startDate, endDate);
             const dateRange = reservation.getDateRange();
-            $('#message').text(`הזמנה בוצעה לתאריכים: ${dateRange.join(', ')}`);
-
+            selectedDates = dateRange; // שמירה של התאריכים שנבחרו
+    
+            // הצגת הכותרת ותאריכים שנבחרו
+            $('#selectedDatesHeader').show();
+            
             // עדכון לוח השנה
             updateCalendar(dateRange);
         } else {
             $('#message').text('אנא מלא את כל השדות.');
+            // מחיקת התאריכים שנבחרו והכותרת
+            $('#selectedDatesHeader').hide();
+            $('#total-days').text('0 ימים'); // לא נוסף ימים אם השדות ריקים
         }
     });
+
+//זה קוד שצריך לעדכן ברגע שמפעיל את השרת עם PHP
+    /*$('#submit').on('click', function() {
+    const startDate = $('#start-date').val();
+    const endDate = $('#end-date').val();
+    
+    if (startDate && endDate) {
+        $.post('path/to/your/php/file.php', {
+            start_date: startDate,
+            end_date: endDate
+        }, function(response) {
+            alert(response); // הצגת תגובה מהשרת
+        });
+    } else {
+        $('#message').text('אנא מלא את כל השדות.');
+        $('#selectedDatesHeader').hide();
+    }
+});
+*/
 
     function isValidDateRange(startDate, endDate) {
         const start = new Date(startDate.split('/').reverse().join('-'));
@@ -65,14 +106,32 @@ $(document).ready(function() {
     function updateCalendar(dates) {
         $('#calendar').empty(); // ניקוי התוכן הקודם בלוח השנה
         const today = new Date();
-        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-
+        const month = today.getMonth(); // החודש הנוכחי
+        const year = today.getFullYear(); // השנה הנוכחית
+        
+        // שמות הימים
+        const daysOfWeek = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+        const headerRow = $('<div class="header-row"></div>');
+        daysOfWeek.forEach(day => {
+            headerRow.append(`<div class="day-header">${day}</div>`);
+        });
+        $('#calendar').append(headerRow);
+    
+        // קביעת מספר הימים בחודש הנוכחי
+        const daysInMonth = new Date(year, month + 1, 0).getDate(); // הוספת 1 לקבלת החודש הבא ומקבלת את היום האחרון
+        
+        // הוספה של 'תאים ריקים' עד שהחודש מתחיל
+        const firstDayOfMonth = new Date(year, month, 1).getDay(); // יום בשבוע של הראשון בחודש
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            $('#calendar').append('<div class="empty-day"></div>');
+        }
+    
         // לולאת עבור כל יום בחודש הנוכחי
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateToCheck = new Date(today.getFullYear(), today.getMonth(), day);
+            const dateToCheck = new Date(year, month, day);
             const formattedDate = new Reservation(dateToCheck.toLocaleDateString('he-IL'), dateToCheck.toLocaleDateString('he-IL')).formatDate(dateToCheck);
             const isReserved = dates.includes(formattedDate); // בדוק אם התאריך מסומן
-
+    
             // הוספה של כל יום בלוח השנה
             $('#calendar').append(`
                 <div class="day${isReserved ? ' reserved' : ''}">
@@ -81,4 +140,7 @@ $(document).ready(function() {
             `);
         }
     }
+
+    const totalDays = dateRange.length; // טווח ימים שנבחר
+    $('#total-days').text(totalDays + ' ימים'); // עדכון מספר ימים
 });

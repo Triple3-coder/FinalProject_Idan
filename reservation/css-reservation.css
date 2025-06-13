@@ -1,40 +1,199 @@
-body {
-    font-family: Arial, sans-serif;
+*{
+    margin: 0 auto;
+    padding: 0 auto;
 }
 
+body {
+    width:98%;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    text-align: right;
+}
+
+label, input, h1, h2, p {
+    text-align: right;
+}
+
+h1{
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* עבור הפס ניווט*/
+#navbar {
+    background-color: #3E8E41;
+    padding: 10px 20px; 
+}
+
+.container {
+    display: flex;
+    align-items: center; 
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex; /* מאפשר לתמונת הלוגו והטקסט להיות באותו קו */
+    align-items: center; /* ממרכז את התוכן אנכית */
+    color: white; /* צבע טקסט הלוגו */
+    text-decoration: none; /* הסרת קו תחתון */
+}
+
+.logo-img {
+    width: 80px; /* גודל התמונה (שנה לפי הצורך) */
+    height: 80px; /* שימור יחס רוחב/גובה */
+    margin-right: 10px; /* רווח בין התמונה לטקסט */
+}
+
+.nav-links {
+    list-style-type: none;
+    padding: 0; 
+    margin: 0; 
+}
+
+.nav-links li {
+    display: inline;
+    margin-right: 20px; 
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none; 
+    padding: 8px 12px; 
+    border-radius: 5px; 
+    transition: background-color 0.3s; 
+}
+
+.nav-links a:hover {
+    background-color: #2E6A29; /* צבע רקע לקישורים כאשר מרחפים מעליהם */
+}
+
+/*================================================================================*/
+
+/*עבור טופס ההזמנה*/
 .reservation-form {
-    max-width: 400px;
-    margin: 0 auto;
+    max-width: 600px; /* רוחב מקסימלי למיכל */
+    margin: 0 auto; /* יישור במרכז */
     padding: 20px;
+    background-color: #fff; /* צבע רקע לבן */
+    border-radius: 8px; /* פינות מעוגלות */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* צל */
     border: 1px solid #ccc;
-    border-radius: 5px;
+}
+
+.form-group {
+    margin-bottom: 20px; /* רווח בין השדות */
 }
 
 label {
-    display: block;
-    margin-top: 10px;
+    display: block; /* הפוך את ה-label למכה מלאה */
+    margin-bottom: 8px; /* רווח מתחת ל-label */
+    color: #555; /* צבע טקסט כהה יותר */
 }
 
 input[type="text"] {
-    width: 100%;
-    padding: 5px;
+    width: 95%; /* רוחב מלא */
+    padding: 10px; /* ריפוד פנימי */
+    border: 1px solid #ccc; /* מסגרת */
+    border-radius: 5px; /* פינות מעוגלות */
+    font-size: 16px; /* גודל גופן */
 }
 
+input[type="text"]:focus {
+    border-color: red; /* צבע הגבול כאשר השדה פעיל */
+    outline: none; /* להסיר את קו המתאר */
+}
+
+.button {
+    direction: rtl;
+    text-align: right;
+}
+
+.submit-button {
+    width: 100%; /* רוחב מלא */
+    background-color: #4CAF50;
+    color: white; 
+    padding: 15px 20px; 
+    margin-bottom: 20px;
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; /* מצביע יד כאשר עוברים עם העכבר */
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s; /* אפקט מעבר */
+}
+
+.submit-button:hover {
+    background-color: #45a049; /* צבע רקע כשהעכבר מעל הכפתור */
+    transform: translateY(-2px); /* הזזת הכפתור למעלה */
+}
+.submit-button:active {
+    transform: translateY(0); /* החזרת הכפתור למקומו כאשר לוחצים עליו */
+}
+
+/*================================================================================*/
+/*עבור הלוח שנה המתווסף*/
 #calendar {
-    margin-top: 20px;
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(7, 1fr); /* 7 עמודות עבור 7 ימים בשבוע */
+    gap: 10px; /* מרחק בין הימים */
+}
+
+.header-row {
+    display: contents; /* מאפשר גמישות בתצוגה */
+}
+
+.day-header {
+    text-align: center;
+    font-weight: bold;
+    background-color: #f1f1f1; /* צבע רקע לשמות הימים */
+    padding: 10px; /* רווח פנימי */
 }
 
 .day {
-    padding: 10px;
-    border: 1px solid #ccc;
     text-align: center;
-    background-color: white;
+    padding: 20px; /* רווח פנימי */
+    border: 1px solid #ccc; /* גבולות ליום */
+    background-color: #ffffff; /* צבע רקע ליום */
+    transition: background-color 0.2s; /* מעבר צבע חלק */
 }
 
 .day.reserved {
-    background-color: #a2d5a2; /* צבע עבור ימים מסומנים */
-    font-weight: bold;
+    background-color: #f8d7da; /* רקע לתאריכים שמורים */
 }
+
+.empty-day {
+    width: 100%; /* למנוע גובה ספציפי */
+    height: 50px; /* גובה עבור תאים ריקים */
+}
+
+#end-date{
+    margin-bottom: 20px;
+}
+
+#selectedDatesList {
+    margin-top: 15px; /* רווח מעל רשימת התאריכים */
+    color: #333; /* צבע טקסט כהה */
+}
+/*================================================================================*/
+/*עבור סך כל ההזמנה*/
+
+#booking-summary {
+    background-color: #e9ecef; 
+    padding: 20px; 
+    text-align: center; /* ממקד את הטקסט */
+    margin: 20px auto; 
+    width: 80%; 
+    max-width: 600px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    position: relative;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+}
+
+footer{
+    background-color: #f8f9fa; padding: 20px; text-align: center;
+}
+
